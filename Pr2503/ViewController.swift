@@ -2,6 +2,13 @@ import UIKit
 
 class ViewController: UIViewController {
     @IBOutlet weak var button: UIButton!
+    @IBOutlet weak var textField: UITextField!
+    @IBOutlet weak var label: UILabel!
+    @IBOutlet weak var myButton: UIButton!
+    @IBOutlet weak var spinner: UIActivityIndicatorView!
+    @IBOutlet weak var mySwitch: UISwitch!
+    
+    var len = Int()
     
     var isBlack: Bool = false {
         didSet {
@@ -13,33 +20,58 @@ class ViewController: UIViewController {
         }
     }
     
+    let queue = DispatchQueue(label: "myQueue", qos: .userInteractive, attributes: .concurrent)
+    
     @IBAction func onBut(_ sender: Any) {
         isBlack.toggle()
+    }
+    
+    @IBAction func passGen(_ sender: Any) {
+        len = mySwitch.isOn ? 3 : 2
+        
+        let pswdChars = String().printable
+        let rndPswd = String((0..<len).compactMap{ _ in pswdChars.randomElement() })
+        textField.text = rndPswd
+        
+        queue.async {
+            self.bruteForce(passwordToUnlock: rndPswd)
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        spinner.isHidden = true
         
-        self.bruteForce(passwordToUnlock: "1!gr")
-        
-        // Do any additional setup after loading the view.
+        textField.isSecureTextEntry = true
     }
     
     func bruteForce(passwordToUnlock: String) {
+        
+        DispatchQueue.main.async {
+            self.spinner.isHidden = false
+            self.spinner.startAnimating()
+        }
+        
         let ALLOWED_CHARACTERS:   [String] = String().printable.map { String($0) }
 
         var password: String = ""
 
-        // Will strangely ends at 0000 instead of ~~~
-        while password != passwordToUnlock { // Increase MAXIMUM_PASSWORD_SIZE value for more
+        
+        while password != passwordToUnlock {
             password = generateBruteForce(password, fromArray: ALLOWED_CHARACTERS)
-//             Your stuff here
+
             print(password)
-            // Your stuff here
+            
         }
         
         print(password)
+        
+        DispatchQueue.main.async {
+            self.spinner.stopAnimating()
+            self.spinner.isHidden = true
+            self.label.text = password
+        }
     }
 }
 
